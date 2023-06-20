@@ -5,7 +5,7 @@ import pytest
 
 @pytest.mark.parametrize(
 	"b, s", [
-		pytest.param(b"", "", id="Empty"),
+		pytest.param(b"", None, id="Empty"),
 		pytest.param(b"Arma", "Arma", id="Basic 1"),
 		pytest.param(b"Altis", "Altis", id="Basic 2"),
 		pytest.param(b"Stratis", "Stratis", id="Basic 3"),
@@ -15,6 +15,6 @@ import pytest
 		),
 	]
 )
-def test_decode_asciiz(b: bytes, s: str):
+def test_decode_asciiz(b: bytes, s: str | None):
 	byteStream = io.BytesIO(b)
 	assert pbokit.read_asciiz(byteStream) == s

@@ -1,0 +1,4 @@
+[style]
+continuation_align_style = valign-right
+dedent_closing_brackets = true
+use_tabs = true

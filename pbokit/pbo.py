@@ -30,4 +30,5 @@ def read_asciiz(stream: io.BufferedIOBase) -> str | None:
 		else:
 			byteStr += block
 
-	return byteStr.decode()
+	result = byteStr.decode()
+	return result if len(result) > 0 else None

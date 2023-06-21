@@ -1,6 +1,7 @@
 import io
-import pbokit
 import pytest
+
+from pbokit.pbo import read_asciiz
 
 
 @pytest.mark.parametrize(
@@ -17,4 +18,4 @@ import pytest
 )
 def test_decode_asciiz(b: bytes, s: str | None):
 	byteStream = io.BytesIO(b)
-	assert pbokit.read_asciiz(byteStream) == s
+	assert read_asciiz(byteStream) == s

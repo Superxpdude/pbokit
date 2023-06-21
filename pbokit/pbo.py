@@ -5,11 +5,12 @@
 import array
 from datetime import datetime
 import functools
+import hashlib
 import io
 import struct
 from typing import Self
 
-__all__ = ["read_asciiz", "PBO", "PBOFile"]
+__all__ = ["PBO", "PBOFile"]
 
 HEADER_FORMAT = "4sLLLL"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
@@ -58,8 +59,16 @@ def reverse_bytes(b: bytes) -> bytes:
 	return a.tobytes()
 
 
+class InvalidChecksum(Exception):
+	pass
+
+
+class NoFileContent(Exception):
+	pass
+
+
 class PBOFile(object):
-	content: bytes
+	content: bytes | None
 
 	def __init__(self, fileName: str, timeStamp: int, size: int):
 		self.fileName = fileName
@@ -72,6 +81,44 @@ class PBOFile(object):
 	def __str__(self) -> str:
 		return self.fileName
 
+	def _read(self, stream: io.BufferedIOBase) -> None:
+		"""Reads the file content from the IO stream
+
+		Parameters
+		----------
+		stream : io.BufferedIOBase
+			IO stream
+
+		Returns
+		-------
+		None
+		"""
+		self.content = stream.read(self.size)
+
+	def as_bytes(self) -> bytes:
+		"""Returns the file content as bytes
+
+		Returns
+		-------
+		bytes
+			File content as bytes
+		"""
+		if self.content is None:
+			raise NoFileContent
+		return self.content
+
+	def as_str(self) -> str:
+		"""Returns the file content as a string
+
+		Returns
+		-------
+		str
+			File content as a string
+		"""
+		if self.content is None:
+			raise NoFileContent
+		return self.content.decode()
+
 
 class PBO(object):
 
@@ -83,9 +130,13 @@ class PBO(object):
 
 	@classmethod
 	def from_file(cls, file: str) -> Self:
-
 		with open(file, "rb") as f:
 			return cls._build(f)
+
+	@classmethod
+	def from_bytes(cls, b: bytes) -> Self:
+		byteStream = io.BytesIO(b)
+		return cls._build(byteStream)
 
 	@classmethod
 	def _build(cls, stream: io.BufferedIOBase) -> Self:
@@ -96,7 +147,8 @@ class PBO(object):
 		dataSize: int
 		header = True
 		headers: dict[str, str] = {}
-		files = []
+		files: list[PBOFile] = []
+
 		# Start by reading the beginning of the PBO file
 		while header:
 			fileName = read_asciiz(stream)
@@ -124,5 +176,20 @@ class PBO(object):
 			else:
 				# File entry
 				files.append(PBOFile(fileName, timestamp, dataSize))
+
+		# Header section complete, start reading file content
+		for file in files:
+			file._read(stream)
+
+		# File content complete. Reset the stream and validate the checksum
+		stream.seek(0)
+		rawContent = stream.read()
+
+		# The SHA-1 hash includes the entire file except the last 21 bytes
+		fileHash = hashlib.sha1(rawContent[:-21])
+		# The hash in the file occupies the last 20 bytes, with a single byte separator
+		if fileHash.digest() != rawContent[-20:]:
+			# If the hash doesn't match, raise an error
+			raise InvalidChecksum
 
 		return cls(headers, files)

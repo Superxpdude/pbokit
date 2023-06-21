@@ -9,7 +9,7 @@ import hashlib
 import io
 import struct
 
-__all__ = ["PBO", "PBOFile"]
+__all__ = ["PBO", "PackedFile"]
 
 HEADER_FORMAT = "4sLLLL"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
@@ -66,7 +66,7 @@ class NoFileContent(Exception):
 	pass
 
 
-class PBOFile(object):
+class PackedFile(object):
 	content: bytes | None
 
 	def __init__(self, fileName: str, timeStamp: int, size: int):
@@ -114,15 +114,13 @@ class PBOFile(object):
 		str
 			File content as a string
 		"""
-		if self.content is None:
-			raise NoFileContent
-		return self.content.decode()
+		return self.as_bytes().decode()
 
 
 class PBO(object):
 
 	def __init__(
-		self, headers: dict[str, str] = {}, files: list[PBOFile] = []
+		self, headers: dict[str, str] = {}, files: list[PackedFile] = []
 	):
 		self.headers = headers
 		self.files = files
@@ -146,7 +144,7 @@ class PBO(object):
 		dataSize: int
 		header = True
 		headers: dict[str, str] = {}
-		files: list[PBOFile] = []
+		files: list[PackedFile] = []
 
 		# Start by reading the beginning of the PBO file
 		while header:
@@ -174,7 +172,7 @@ class PBO(object):
 
 			else:
 				# File entry
-				files.append(PBOFile(fileName, timestamp, dataSize))
+				files.append(PackedFile(fileName, timestamp, dataSize))
 
 		# Header section complete, start reading file content
 		for file in files:
@@ -192,3 +190,72 @@ class PBO(object):
 			raise InvalidChecksum
 
 		return cls(headers, files)
+
+	def _get_file_by_name(self, fileName: str) -> PackedFile | None:
+		"""Searches the PBO file for a packed file matching the file name
+
+		Parameters
+		----------
+		fileName : str
+			File name to search for. Not case-sensitive.
+
+		Returns
+		-------
+		PackedFile | None
+			Packed file if found
+		"""
+		fileNameLower = fileName.casefold().replace("/", "\\")
+		for file in self.files:
+			if file.fileName.casefold() == fileNameLower:
+				return file
+		# If we could not find a match for the filename, return none
+		return None
+
+	def has_file(self, fileName: str) -> bool:
+		"""Checks if a file exists within the PBO
+
+		Parameters
+		----------
+		fileName : str
+			Filename to search for
+
+		Returns
+		-------
+		bool
+			File exists in PBO
+		"""
+		return True if self._get_file_by_name(fileName) is not None else False
+
+	def file_as_bytes(self, fileName: str) -> bytes:
+		"""Retrieves the contents of a file packed into the PBO in byte form
+
+		Parameters
+		----------
+		fileName : str
+			Filename to read
+
+		Returns
+		-------
+		bytes
+			File contents
+		"""
+		file = self._get_file_by_name(fileName)
+		if file is None:
+			raise FileNotFoundError
+		# File exists, return its file content
+		return file.as_bytes()
+
+	def file_as_str(self, fileName: str) -> str:
+		"""Retrieves the contents of a file packed into the PBO in string form
+
+		Parameters
+		----------
+		fileName : str
+			Filename to read
+
+		Returns
+		-------
+		str
+			File contents
+		"""
+		return self.file_as_bytes(fileName).decode()

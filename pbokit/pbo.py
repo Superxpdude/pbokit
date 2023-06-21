@@ -11,7 +11,7 @@ import struct
 
 __all__ = ["PBO", "PackedFile"]
 
-HEADER_FORMAT = "4sLLLL"
+HEADER_FORMAT = "<4s4L"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 
 

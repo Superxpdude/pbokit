@@ -8,7 +8,6 @@ import functools
 import hashlib
 import io
 import struct
-from typing import Self
 
 __all__ = ["PBO", "PBOFile"]
 
@@ -129,17 +128,17 @@ class PBO(object):
 		self.files = files
 
 	@classmethod
-	def from_file(cls, file: str) -> Self:
+	def from_file(cls, file: str) -> "PBO":
 		with open(file, "rb") as f:
 			return cls._build(f)
 
 	@classmethod
-	def from_bytes(cls, b: bytes) -> Self:
+	def from_bytes(cls, b: bytes) -> "PBO":
 		byteStream = io.BytesIO(b)
 		return cls._build(byteStream)
 
 	@classmethod
-	def _build(cls, stream: io.BufferedIOBase) -> Self:
+	def _build(cls, stream: io.BufferedIOBase) -> "PBO":
 		mimeType: bytes
 		originalSize: int
 		offset: int

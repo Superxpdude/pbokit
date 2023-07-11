@@ -1,5 +1,7 @@
+.coverage
 /.venv
+/build
+pbokit.egg-info
 __pycache__
 *.pyc
 *.pyo
-.coverage

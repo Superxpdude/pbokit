@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=65.5.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+version = "0.1.0"
+authors = [{ name = "Superxpdude" }]
+name = "pbokit"
+description = "Fully-typed Arma 3 PBO extractor library"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.urls]
+Repository = "https://github.com/Superxpdude/pbokit"

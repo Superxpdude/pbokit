@@ -22,12 +22,12 @@ pbo.has_file("description.ext")
 ### Binary Files
 ```python
 pbo = pbokit.PBO.from_file("pbofile.pbo")
-pbo.file_as_bytes("loadscreen.paa")
+pbo["loadscreen.paa"].as_bytes()
 ```
 ### Text Files
 ```python
 pbo = pbokit.PBO.from_file("pbofile.pbo")
-pbo.file_as_str("description.ext")
+pbo["description.ext"].as_str()
 ```
 ## Read header values from the PBO
 ```python

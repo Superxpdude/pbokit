@@ -3,6 +3,7 @@
 # PBO File Format
 # https://community.bistudio.com/wiki/PBO_File_Format
 import array
+from collections.abc import KeysView
 from datetime import datetime
 import functools
 import hashlib
@@ -120,10 +121,24 @@ class PackedFile(object):
 class PBO(object):
 
 	def __init__(
-		self, headers: dict[str, str] = {}, files: list[PackedFile] = []
+		self, headers: dict[str, str] = {}, files: dict[str, PackedFile] = {}
 	):
 		self.headers = headers
-		self.files = files
+		self._files = files
+
+	def __getitem__(self, key: str) -> PackedFile:
+		if not isinstance(key, str):
+			raise TypeError("File names must be strings")
+		return self._files[key.casefold()]
+
+	def __setitem__(self, key: str, value: PackedFile) -> None:
+		raise NotImplementedError("Modifying a PBO is not yet supported")
+
+	def __delitem__(self, key: str) -> None:
+		raise NotImplementedError("Modifying a PBO is not yet supported")
+
+	def __contains__(self, item: str) -> bool:
+		return item in self._files
 
 	@classmethod
 	def from_file(cls, file: str) -> "PBO":
@@ -144,7 +159,7 @@ class PBO(object):
 		dataSize: int
 		header = True
 		headers: dict[str, str] = {}
-		files: list[PackedFile] = []
+		files: dict[str, PackedFile] = {}
 
 		# Start by reading the beginning of the PBO file
 		while header:
@@ -172,11 +187,12 @@ class PBO(object):
 
 			else:
 				# File entry
-				files.append(PackedFile(fileName, timestamp, dataSize))
+				keyName = fileName.casefold().replace("\\", "/")
+				files[keyName] = PackedFile(fileName, timestamp, dataSize)
 
 		# Header section complete, start reading file content
 		for file in files:
-			file._read(stream)
+			files[file]._read(stream)
 
 		# File content complete. Reset the stream and validate the checksum
 		stream.seek(0)
@@ -191,25 +207,8 @@ class PBO(object):
 
 		return cls(headers, files)
 
-	def _get_file_by_name(self, fileName: str) -> PackedFile | None:
-		"""Searches the PBO file for a packed file matching the file name
-
-		Parameters
-		----------
-		fileName : str
-			File name to search for. Not case-sensitive.
-
-		Returns
-		-------
-		PackedFile | None
-			Packed file if found
-		"""
-		fileNameLower = fileName.casefold().replace("/", "\\")
-		for file in self.files:
-			if file.fileName.casefold() == fileNameLower:
-				return file
-		# If we could not find a match for the filename, return none
-		return None
+	def files(self) -> KeysView[str]:
+		return self._files.keys()
 
 	def has_file(self, fileName: str) -> bool:
 		"""Checks if a file exists within the PBO
@@ -224,38 +223,4 @@ class PBO(object):
 		bool
 			File exists in PBO
 		"""
-		return True if self._get_file_by_name(fileName) is not None else False
-
-	def file_as_bytes(self, fileName: str) -> bytes:
-		"""Retrieves the contents of a file packed into the PBO in byte form
-
-		Parameters
-		----------
-		fileName : str
-			Filename to read
-
-		Returns
-		-------
-		bytes
-			File contents
-		"""
-		file = self._get_file_by_name(fileName)
-		if file is None:
-			raise FileNotFoundError
-		# File exists, return its file content
-		return file.as_bytes()
-
-	def file_as_str(self, fileName: str) -> str:
-		"""Retrieves the contents of a file packed into the PBO in string form
-
-		Parameters
-		----------
-		fileName : str
-			Filename to read
-
-		Returns
-		-------
-		str
-			File contents
-		"""
-		return self.file_as_bytes(fileName).decode()
+		return fileName.casefold() in self

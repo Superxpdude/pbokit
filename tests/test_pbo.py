@@ -25,6 +25,7 @@ def test_read_pbo(pbofile):
 )
 def test_file_exists(pbofile: pbokit.PBO, filename: str, exists: bool):
 	assert pbofile.has_file(filename) == exists
+	assert (filename.casefold() in pbofile.files()) == exists
 
 
 @pytest.mark.parametrize(
@@ -37,7 +38,7 @@ def test_file_exists(pbofile: pbokit.PBO, filename: str, exists: bool):
 	]
 )
 def test_read_textfile(pbofile: pbokit.PBO, filename: str, data: str):
-	assert pbofile.file_as_str(filename) == data
+	assert pbofile[filename].as_str() == data
 
 
 @pytest.mark.parametrize(
@@ -50,7 +51,7 @@ def test_read_textfile(pbofile: pbokit.PBO, filename: str, data: str):
 	]
 )
 def test_read_image(pbofile: pbokit.PBO, filename: str, data: bytes):
-	assert pbofile.file_as_bytes(filename) == data
+	assert pbofile[filename].as_bytes() == data
 
 
 def test_fail_checksum():
@@ -66,3 +67,13 @@ def test_fail_checksum():
 )
 def test_headers(pbofile: pbokit.PBO, header: str, value: str):
 	assert pbofile.headers[header] == value
+
+
+def test_fail_write(pbofile: pbokit.PBO):
+	with pytest.raises(NotImplementedError):
+		pbofile["file4.txt"] = pbokit.PackedFile("file4.txt", 1000, 20)
+
+
+def test_fail_delete(pbofile: pbokit.PBO):
+	with pytest.raises(NotImplementedError):
+		del pbofile["file1.txt"]

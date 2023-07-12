@@ -207,7 +207,7 @@ class PBO(object):
 
 		return cls(headers, files)
 
-	def files(self) -> KeysView[str]:
+	def filenames(self) -> KeysView[str]:
 		return self._files.keys()
 
 	def has_file(self, fileName: str) -> bool:

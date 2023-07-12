@@ -25,7 +25,7 @@ def test_read_pbo(pbofile):
 )
 def test_file_exists(pbofile: pbokit.PBO, filename: str, exists: bool):
 	assert pbofile.has_file(filename) == exists
-	assert (filename.casefold() in pbofile.files()) == exists
+	assert (filename.casefold() in pbofile.filenames()) == exists
 
 
 @pytest.mark.parametrize(

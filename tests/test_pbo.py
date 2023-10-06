@@ -1,6 +1,6 @@
 import pbokit
 import pytest
-from pbokit.pbo import InvalidChecksum
+from pbokit.pbo import InvalidChecksum, NoFileContent
 
 
 @pytest.fixture
@@ -8,8 +8,19 @@ def pbofile() -> pbokit.PBO:
 	return pbokit.PBO.from_file("tests/test.pbo")
 
 
+@pytest.fixture
+def pboBytes() -> bytes:
+	file = open("tests/test.pbo", "rb")
+	return file.read()
+
+
 def test_read_pbo(pbofile):
 	assert pbofile is not None
+
+
+def test_read_bytes():
+	with open("tests/test.pbo", "rb") as file:
+		pbofile = pbokit.PBO.from_bytes(file.read())
 
 
 @pytest.mark.parametrize(
@@ -28,6 +39,12 @@ def test_file_exists(pbofile: pbokit.PBO, filename: str, exists: bool):
 	assert (filename.casefold() in pbofile.filenames()) == exists
 
 
+def test_file_no_content():
+	file = pbokit.PackedFile("testfile.txt", 1, 1)
+	with pytest.raises(NoFileContent):
+		file.as_bytes()
+
+
 @pytest.mark.parametrize(
 	"filename, data", [
 		pytest.param("file1.txt", "Hello World", id="File 1"),
@@ -39,6 +56,11 @@ def test_file_exists(pbofile: pbokit.PBO, filename: str, exists: bool):
 )
 def test_read_textfile(pbofile: pbokit.PBO, filename: str, data: str):
 	assert pbofile[filename].as_str() == data
+
+
+def test_read_invalid_name(pbofile: pbokit.PBO):
+	with pytest.raises(TypeError):
+		pbofile[1]  #type: ignore
 
 
 @pytest.mark.parametrize(

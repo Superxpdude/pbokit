@@ -74,6 +74,7 @@ class PackedFile(object):
 		self.fileName = fileName
 		self.timeStamp = datetime.fromtimestamp(timeStamp)
 		self.size = size
+		self.content = None
 
 	def __repr__(self) -> str:
 		return self.fileName

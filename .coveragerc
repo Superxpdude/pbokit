@@ -1,0 +1,8 @@
+# .coveragerc to control coverage.py
+[run]
+branch = true
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+	def __repr__
